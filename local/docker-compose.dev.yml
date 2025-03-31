@@ -1,0 +1,28 @@
+# docker compose -f ./local/docker-compose.yml up --build -d
+# docker compose -f ./local/docker-compose.yml down
+# version: '3.8'
+
+services:
+  prep-local-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    image: aivsw/prep:local-dev
+    container_name: prep-local-dev
+    command: /bin/bash
+    stdin_open: true    # Equivalent to -i in docker run
+    tty: true           # Equivalent to -t in docker run
+    runtime: nvidia
+    ipc: host           # Shares the host's IPC namespace
+    volumes:
+      - data:/app/data  # Mounts the CIFS share to /app/data inside the container
+      - ${HOME}/storage/research:/app  # Mounts the local directory to /app inside the container
+    env_file:
+      - .env    # Loads environment variables from .env file
+
+volumes:
+  data:
+    driver_opts:
+      type: cifs
+      o: "username=${CIFS_USER},password=${CIFS_PASS},file_mode=0777,dir_mode=0777"
+      device: "${CIFS_SHARE}"
